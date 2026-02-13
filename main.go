@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -47,8 +48,8 @@ func (s *Server) handleSession(sess ssh.Session) {
 		io.WriteString(sess, "Error: Terminal (PTY) required.\r\n")
 		return
 	}
-
-	user := sess.User()
+	log.Println("New User connecting")
+	user := sess.User() // This is the user who just connected
 	msgChan := make(chan string, 10)
 
 	s.mu.Lock()
@@ -56,7 +57,16 @@ func (s *Server) handleSession(sess ssh.Session) {
 	s.mu.Unlock()
 
 	// Initial Welcome
+
+	current_connections := strconv.Itoa(len(s.conns))
 	io.WriteString(sess, fmt.Sprintf("\r\n--- Welcome %s! (Terminal: %s) ---\r\n> ", user, pty.Term))
+	if len(s.conns) > 1 {
+		io.WriteString(sess, fmt.Sprintf("\r\n --- There are %s others in the chat. ---\r\n", current_connections))
+	} else {
+		io.WriteString(sess, fmt.Sprintf("\r\n --- There's %s other person in the chat. ---\r\n", current_connections))
+	}
+
+	s.broadcast(fmt.Sprintf("*** %s joined the chat *** There's now %s in the chat.", user, current_connections), sess)
 
 	// Outbound worker: relays messages from OTHERS to this user
 	go func() {
@@ -105,14 +115,19 @@ func (s *Server) handleSession(sess ssh.Session) {
 	}
 
 	// Cleanup on disconnect
+	s.broadcast(fmt.Sprintf("*** %s left the chat *** There's now %s in the chat.", user, strconv.Itoa(len(s.conns)-1)), sess)
+
 	s.mu.Lock()
 	delete(s.conns, sess)
+
 	s.mu.Unlock()
 	close(msgChan)
 }
 
 func (s *Server) broadcast(msg string, sender ssh.Session) {
+	log.Println("Message sending")
 	s.mu.Lock()
+
 	defer s.mu.Unlock()
 	for sess, ch := range s.conns {
 		if sess != sender {
