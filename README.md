@@ -1,6 +1,6 @@
 # terminal-chat-app-in-go
 
-#### Infrastructure for testing this: 
+### Infrastructure for testing this: 
 - CD to terraform folder 
 - Add an ingress rule for your public IP so you can connect
 - Update AWS account number for owner 
@@ -19,7 +19,7 @@
 - Use `go run main.go` to run the server
 
 
-#### TODO: 
+##### TODO: 
 - Check public keys in DynamoDB for allowing new connections
 - Add dates/timestamps to broadcasts
 - Upgrade logging
@@ -29,7 +29,7 @@
 - Add a host key with Wish `wish.WithHostKeyPEM([]byte(secretString))` for host identification
 
 
-#### For front end and whitelisting:
+### For front end and whitelisting:
 - Build a simple front end
 - Build infra to host it
 - From front end, allow users to upload a public key and store it in DynamoDB
