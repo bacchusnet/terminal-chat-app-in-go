@@ -115,12 +115,14 @@ func (s *Server) handleSession(sess ssh.Session) {
 	}
 
 	// Cleanup on disconnect
-	s.broadcast(fmt.Sprintf("*** %s left the chat *** There's now %s in the chat.", user, strconv.Itoa(len(s.conns)-1)), sess)
 
 	s.mu.Lock()
 	delete(s.conns, sess)
 
 	s.mu.Unlock()
+
+	s.broadcast(fmt.Sprintf("*** %s left the chat *** There's now %s in the chat.", user, strconv.Itoa(len(s.conns)-1)), nil)
+
 	close(msgChan)
 }
 
@@ -130,7 +132,7 @@ func (s *Server) broadcast(msg string, sender ssh.Session) {
 
 	defer s.mu.Unlock()
 	for sess, ch := range s.conns {
-		if sess != sender {
+		if sender == nil || sess != sender {
 			select {
 			case ch <- msg:
 			default:
