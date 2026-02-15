@@ -89,6 +89,31 @@ func (s *Server) handleSession(sess ssh.Session) {
 
 		// Handle Enter (Carriage Return or Line Feed)
 		if char == '\r' || char == '\n' {
+
+			// Inside the handleSession input loop, after detecting Enter:
+			msg := strings.TrimSpace(string(input))
+
+			if msg == "/who" {
+				s.mu.Lock()
+				var users []string
+				for sess := range s.conns {
+					users = append(users, sess.User())
+				}
+
+				s.mu.Unlock()
+
+				io.WriteString(sess, fmt.Sprintf("\r\n--- Online Users (%d) ---\r\n", len(users)))
+				io.WriteString(sess, strings.Join(users, ", ")+"\r\n> ")
+				input = []byte{} // Clear buffer
+				continue         // Skip the broadcast so the command stays private
+			}
+
+			if msg == "/quit" {
+				io.WriteString(sess, "\r\nGoodbye!\r\n")
+				sess.Close()
+				return
+			}
+
 			if len(input) > 0 {
 				msg := strings.TrimSpace(string(input))
 				if msg != "" {
@@ -118,10 +143,9 @@ func (s *Server) handleSession(sess ssh.Session) {
 
 	s.mu.Lock()
 	delete(s.conns, sess)
-
 	s.mu.Unlock()
 
-	s.broadcast(fmt.Sprintf("*** %s left the chat *** There's now %s in the chat.", user, strconv.Itoa(len(s.conns)-1)), nil)
+	s.broadcast(fmt.Sprintf("*** %s left the chat *** There's now %s in the chat.", user, strconv.Itoa(len(s.conns))), nil)
 
 	close(msgChan)
 }
