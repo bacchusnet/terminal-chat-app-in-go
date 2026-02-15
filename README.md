@@ -3,8 +3,8 @@
 
 ## Notes:
 
-### Architecture 
-Think of the architecture as a Stateful Hub-and-Spoke model.
+### Architecture
+The architecture is a stateful hub-and-spoke model.
 
 The Hub (The Server Struct): This is the "brain." It maintains a global map of all active connections. It acts as the traffic controller, deciding where messages go. The server is using PTY (pseudo-teletype). 
 
@@ -29,19 +29,17 @@ The Outbound Worker: Each user has a background goroutine that watches their spe
 
 ### The Technology Stack
 1. gliderlabs/ssh
-What it does: Handles the heavy lifting of the SSH protocol.
 
-Why use it: SSH is a complex protocol involving complicated encryption handshakes (Key Exchange/Kex). This library allows you to focus on the chat logic rather than the math of RSA or Ed25519.
+Handles the heavy lifting of the SSH protocol.
+SSH is a complex protocol involving complicated encryption handshakes (Key Exchange/Kex). This library handles the math of RSA or Ed25519.
 
 2. charmbracelet/wish
-What it does: A "middleware" wrapper for the SSH library.
 
-Why use it: It simplifies the process of adding features like logging, PTY management, and custom handlers. It’s part of the modern "Charm" ecosystem known for making terminals look beautiful.
+A "middleware" wrapper for the SSH library. It simplifies the process of adding features like logging, PTY management, and custom handlers.
 
 3. sync.Mutex (The "Traffic Light")
-What it does: Protects shared data.
 
-Why use it: Since Go is concurrent, multiple threads might try to edit your list of users at once. The Mutex ensures only one thread can touch the user list at a time, preventing "memory corruption"—a critical concept in cybersecurity.
+This protects shared data. Since Go is concurrent, multiple threads might try to edit your list of users at once. The Mutex ensures only one thread can touch the user list at a time, preventing memory corruption.
 
 
 
